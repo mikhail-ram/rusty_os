@@ -1,10 +1,11 @@
 mod logo;
 mod utility;
-use strum_macros::EnumIter;
-use strum::IntoEnumIterator;
 use std::collections::HashMap;
+use std::str::FromStr;
+use strum::IntoEnumIterator;
+use strum_macros::{EnumIter, EnumString};
 
-#[derive(Debug, EnumIter)]
+#[derive(Debug, EnumIter, EnumString)]
 enum Functions {
     Help,
     Settings,
@@ -14,49 +15,84 @@ enum Functions {
     RaptorImageEditor,
     RaptorFileExplorer,
     Startup,
-    Back
+    Back,
 }
 
-const FUNCTIONS: [&str; 9] = ["Help", "Settings", "Web_Browser",
-                              "RaptorText_Editor", "Calculator",
-                              "RaptorImage_Editor", "RaptorFile_Xplorer",
-                              "Startup", "Back"];
+trait Execute {
+    fn run(&self);
+    fn help() {
+        println!("Sorry, no help has been defined.");
+    }
+}
 
-fn exec_loop() {
-    for (index, function) in Functions::iter().enumerate() {
-        let index = index + 1;
-        if index % 2 == 0 {
-            print!("[{}] {:?}\n", index, function);
-        }
-        else {
-            print!("[{}] {:?} ", index, function);
+impl Execute for Functions {
+    fn run(&self) {
+        match self {
+            Functions::Help => {
+                utility::border("Help");
+                println!("Here is a list of all our menus. Please choose one to learn more.");
+                exec_loop();
+            }
+            _ => {}
         }
     }
 }
 
-fn main() {
+fn exec_loop() {
     let mut functions_hash = HashMap::new();
     for (index, function) in Functions::iter().enumerate() {
         functions_hash.insert(index + 1, function);
     }
+    for (index, function) in Functions::iter().enumerate() {
+        let index = index + 1;
+        if index % 2 == 0 {
+            print!("[{}] {:?}\n", index, function);
+        } else {
+            print!("[{}] {:?} ", index, function);
+        }
+    }
+    let input = utility::input("\n[*] ").trim_end().to_owned();
+    match input.as_str() {
+        "" => {
+            utility::clear_screen();
+            println!("Invalid Input. Please enter the name or number of the menu.");
+            exec_loop();
+        },
+        input if input.chars().all(|c| c.is_digit(10)) => {
+            let choice: usize = input.parse::<usize>().unwrap();
+            match functions_hash.get(&choice) {
+                Some(function) => function.run(),
+                None => {
+                    utility::clear_screen();
+                    println!("Please enter a valid number within the range 1-{}.", functions_hash.keys().len());
+                    exec_loop();
+                }
+            }
+        }
+        input if input.chars().all(|c| c.is_ascii_alphabetic()) => {
+            match Functions::from_str(input) {
+                Ok(function) => function.run(),
+                Err(_) => {
+                    utility::clear_screen();
+                    println!("Menu does not exist. Please input a valid name or number for the menu.");
+                    exec_loop();
+                }
+            }
+        }
+        _ => {
+            println!("Invalid Input. Please enter the name or number of the menu.");
+            exec_loop();
+        },
+    }
+}
+
+fn main() {
     utility::date();
     println!("{}", logo::TEXT);
     println!("Welcome to Rusty_OS.");
     println!("type in the Menu name to go to it and 'Back' to return here.");
-    println!("If help is needed, type in 'Help()'.");
+    println!("If help is needed, please choose 'Help'.");
     println!("-------------------");
     utility::border("Main Menu");
     exec_loop();
-    let input = utility::input("\n[*] ").trim_end().to_owned();
-    // TODO: Replace if/else logic with match clause.
-    if input == "" {
-        println!("Please enter a valid number");
-    } else if input.chars().all(|c| c.is_digit(10)) {
-        let choice: usize = input.parse::<usize>().unwrap() - 1;
-        println!("{}", FUNCTIONS[choice]);
-    } else if input.chars().all(|c| c.is_ascii_alphabetic()) {
-        println!("Alphabetic!");
-    } else {
-        println!("Other");
-    }
 }
