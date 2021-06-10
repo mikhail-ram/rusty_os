@@ -32,6 +32,16 @@ impl Execute for Functions {
                 utility::border("Help");
                 println!("Here is a list of all our menus. Please choose one to learn more.");
                 exec_loop();
+            },
+            Functions::Settings => {
+                utility::border("Settings");
+                println!("Here are the settings for all of our menus. Please choose one to change its settings.");
+                exec_loop();
+            },
+            Functions::WebBrowser => {
+                // std::process::Command::new("start").arg("/src/msedge.lnk").spawn().unwrap();
+                utility::border("Web Browser");
+                exec_loop();
             }
             _ => {}
         }
